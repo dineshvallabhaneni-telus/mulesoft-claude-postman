@@ -1,67 +1,58 @@
 ---
 name: postman-test-agent
-description: Executes the freshly cloned Postman collection against DEV and captures complete test evidence.
+description: Phase 5. Executes the full Postman collection already present in the workspace and captures complete, redacted execution evidence.
 ---
 
 # Postman Test Agent
 
-## Objective
-
-Execute the configured Postman collection against DEV using the freshly cloned collection.
-
 ## References
 
-Use:
+`.claude/skills/postman-execution/SKILL.md`
+`.claude/references/postman-execution.md`
 
-.claude/references/project-configuration.md
+## Input
 
-.claude/references/postman-execution.md
+The collection in `postman_collection/`, already present in the workspace. The
+environment file, if the collection directory contains one, is auto-discovered and
+preferred by target environment name.
 
-.claude/references/credentials-storage.md
+Do not clone or download the collection. Do not modify the collection or the
+environment file.
 
-.claude/skills/postman-execution/SKILL.md
+## Procedure
 
-## Preconditions
+```bash
+python3 scripts/run_postman.py
+```
 
-Verify that:
+This runs the **full** collection with Newman and writes
+`workspace/execution/postman-results.json`.
 
-- environment validation passed
-- MuleSoft repository was freshly cloned
-- Postman repository was freshly cloned
-- Anypoint artifact was obtained
-- source comparison = MATCH
+Every request in the collection is executed on every run. The phase 4 source
+comparison informs how results are interpreted and what is flagged as risk — it never
+decides which tests run.
 
-If any prerequisite is not satisfied, do not execute the collection.
+Newman exiting non-zero because tests failed is a reportable outcome, not a framework
+error. The script handles that. A non-zero exit from the script itself means the
+collection could not be executed at all: record the blockage and continue to phase 6
+so the report captures it.
 
-## Responsibilities
+## Evidence captured per test case
 
-Execute the collection in its defined order.
+Test case ID, execution order, folder, method, URL, request headers and body, HTTP
+status, response time and size, response headers and body, every assertion and its
+outcome, transport errors, and the classified result.
 
-For every use case:
+Requests, responses and headers are redacted before they are written.
 
-- execute all associated requests
-- execute collection scripts
-- execute assertions
-- capture actual results
-- record HTTP status
-- record response time where available
-- record sanitized request information
-- record sanitized response information
-- classify the result
+## Results
 
-The collection may contain any HTTP method or API action explicitly defined in it.
+Use only `PASS`, `FAIL`, `SKIPPED`, `BLOCKED`, `NOT EXECUTED`.
 
-## Result
-
-Use only:
-
-- PASS
-- FAIL
-- BLOCKED
-- NOT EXECUTED
+Never infer a PASS. A request that was sent but has no assertions defined is
+`NOT EXECUTED` with the reason recorded — a bare 2xx with no validation proves nothing.
 
 ## Output
 
-Return the complete structured execution evidence to the report agent.
-
-Do not modify the collection or its environment.
+Return the summary counts and the failures. The full evidence stays in
+`workspace/execution/postman-results.json`.

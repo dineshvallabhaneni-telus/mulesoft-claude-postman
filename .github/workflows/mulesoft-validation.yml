@@ -1,0 +1,140 @@
+name: MuleSoft Deployment Validation
+
+# Validates the current MuleSoft source against the previous deployment's source,
+# runs the full Postman collection, and produces a Word validation report.
+#
+# The framework is zero-config. The only things this workflow must arrange are:
+#   1. the current source is checked out
+#   2. the previous deployment's source is present in previous_ws/
+#   3. the Postman collection is present in postman_collection/
+#
+# Nothing is cloned by the framework and Anypoint Platform is never contacted.
+
+on:
+  workflow_dispatch:
+    inputs:
+      previous_deployment_ref:
+        description: 'Git ref of the previous deployment (tag, branch or SHA). Populates previous_ws/.'
+        required: false
+        default: ''
+      target_environment:
+        description: 'Target environment name'
+        required: false
+        default: 'DEV'
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      TARGET_ENVIRONMENT: ${{ github.event.inputs.target_environment || 'DEV' }}
+      # Uncomment to override framework defaults; see .claude/references/configuration.md
+      # PREVIOUS_WORKSPACE: ./previous_ws
+      # POSTMAN_COLLECTION_DIR: ./postman_collection
+      # NEWMAN_INSECURE: 'false'
+
+    steps:
+      - name: Check out current source
+        uses: actions/checkout@v4
+        with:
+          # Full history so the previous deployment ref can be resolved below.
+          fetch-depth: 0
+
+      # Populates previous_ws/ from a Git ref. Replace this step if your previous
+      # deployment source comes from somewhere else (an artifact, a release asset,
+      # another repository) - the framework only cares that the directory exists.
+      - name: Materialise previous deployment source into previous_ws/
+        run: |
+          set -euo pipefail
+          REF="${{ github.event.inputs.previous_deployment_ref }}"
+          if [ -z "$REF" ]; then
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              REF="${{ github.event.pull_request.base.sha }}"
+            else
+              REF="$(git rev-parse HEAD~1)"
+            fi
+          fi
+          echo "Previous deployment ref: $REF"
+          mkdir -p previous_ws
+          git archive "$REF" | tar -x -C previous_ws
+          echo "PREVIOUS_DEPLOYMENT_REF=$REF" >> "$GITHUB_ENV"
+
+      - name: Verify workspace contract
+        run: |
+          set -euo pipefail
+          test -d previous_ws || { echo "::error::previous_ws/ is missing"; exit 1; }
+          test -d postman_collection || { echo "::error::postman_collection/ is missing"; exit 1; }
+          echo "previous_ws:        $(find previous_ws -type f | wc -l) files"
+          echo "postman_collection: $(find postman_collection -type f | wc -l) files"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --quiet --upgrade pip
+          python3 -m pip install --quiet python-docx
+          npm install --global --silent newman
+
+      - name: Install Claude Code
+        run: npm install --global --silent @anthropic-ai/claude-code
+
+      - name: Run validation workflow
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Any secret the Postman collection needs, exposed as an environment
+          # variable for the collection to reference. Never written to disk.
+          # POSTMAN_CLIENT_ID: ${{ secrets.POSTMAN_CLIENT_ID }}
+          # POSTMAN_CLIENT_SECRET: ${{ secrets.POSTMAN_CLIENT_SECRET }}
+        run: |
+          claude -p "$(cat Prompt/prompt.md)" \
+            --permission-mode acceptEdits \
+            --allowedTools "Bash,Read,Write,Glob,Grep" \
+            --output-format text \
+            | tee validation-summary.txt
+
+      - name: Publish summary
+        if: always()
+        run: |
+          {
+            echo "## MuleSoft Deployment Validation"
+            echo ""
+            echo "Previous deployment ref: \`${PREVIOUS_DEPLOYMENT_REF:-unknown}\`"
+            echo ""
+            echo '```'
+            cat validation-summary.txt 2>/dev/null || echo "No summary produced."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mulesoft-validation-report
+          path: |
+            reports/*.docx
+            workspace/execution/*.json
+          # warn, not error, so a genuine validation failure is not masked by an
+          # artifact-upload failure when no report was produced.
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Fail the job on a failed validation
+        if: always()
+        run: |
+          set -euo pipefail
+          if ! grep -q '^Overall Status: PASS' validation-summary.txt; then
+            echo "::error::Validation did not pass. See the uploaded report."
+            exit 1
+          fi

@@ -1,63 +1,58 @@
 ---
 name: source-comparison-agent
-description: Performs exhaustive content comparison between the fresh MuleSoft Git clone and the Anypoint Platform artifact.
+description: Phase 4. Compares the current MuleSoft source in the workspace against the previous deployment source in previous_ws, and summarises what could affect behaviour.
 ---
 
 # Source Comparison Agent
 
 ## References
 
-Use:
-
-.claude/skills/source-comparison/SKILL.md
-
-.claude/references/source-comparison.md
+`.claude/skills/source-comparison/SKILL.md`
+`.claude/references/source-comparison.md`
 
 ## Inputs
 
-Git:
+Current source: the repository root of the GitHub Actions workspace.
 
-workspace/mulesoft-repository
+Previous deployment source: `previous_ws/`.
 
-Anypoint:
+Both are already present. Do not clone, fetch or download anything, and do not
+contact Anypoint Platform.
 
-workspace/anypoint-artifact/extracted
+## Procedure
 
-## Objective
+Run the comparison:
 
-Determine whether the two application versions match completely.
+```bash
+python3 scripts/source_compare.py
+```
 
-## Comparison
+This writes `workspace/execution/source-comparison.json`. A non-zero exit means the
+comparison could not run — report it and classify the run `BLOCKED`.
 
-Compare actual file contents.
+Then read the evidence file and interpret it. Start with `behaviourDeltas`, which
+already isolates the changes that can alter runtime behaviour, then consult individual
+entries in `changes` for the diffs that matter.
 
-Check:
+## What to identify
 
-- XML
-- properties
-- YAML
-- YML
-- JSON
-- Mule configuration
-- application configuration
-- resources
-- scripts
-- templates
-- other relevant application files
+- Added, deleted and modified files
+- Mule flow and sub-flow changes
+- HTTP endpoint and API changes
+- Dependency additions, removals and version changes
+- Configuration and property key changes
+- DataWeave changes
+- Anything else that could alter application behaviour
 
-Identify:
+## Interpretation
 
-- missing files
-- additional files
-- modified files
-- content differences
+Differences are the expected input to this framework, not a failure. This phase does
+not block phase 5 — the full Postman collection runs regardless of what changed.
 
-## Gate
+Focus on functional impact. A logging level change and a removed endpoint are not the
+same finding, and the report should not treat them alike.
 
-MATCH allows Postman execution.
+## Output
 
-MISMATCH blocks Postman execution.
-
-## Completion
-
-Return complete comparison evidence.
+Return a summary of the change set and its likely functional impact. The raw evidence
+stays in `workspace/execution/source-comparison.json` for the report generator.

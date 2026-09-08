@@ -1,3 +1,22 @@
-/reports
-/workspace/anypoint-artifact
-/.vscode
+# Framework output
+/reports/
+/workspace/
+
+# Previous deployment source, materialised by the calling workflow at run time
+/previous_ws/
+
+# Never commit secrets. Secrets come from GitHub Actions secrets as env vars.
+*.env
+credentials/
+config/
+
+# Editor and OS
+/.vscode/
+/.idea/
+.DS_Store
+
+# Build and dependency output
+target/
+node_modules/
+__pycache__/
+*.pyc

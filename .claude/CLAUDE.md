@@ -1,355 +1,191 @@
-# MuleSoft Postman Test Report Automation
+# MuleSoft Deployment Validation Framework
 
 ## Purpose
 
-This project provides a reusable, configuration-driven framework for validating a MuleSoft application against its Git local folder, validating the corresponding application artifact from Anypoint Platform, executing a Postman collection against DEV, and generating a professional Microsoft Word test execution report.
+A reusable, zero-configuration framework that validates a MuleSoft application
+change set before or after deployment, and produces a professional Microsoft Word
+validation report.
 
-The framework is reusable across multiple MuleSoft projects.
+It runs inside an existing GitHub Actions workspace and is invoked headlessly:
 
-Project-specific information must come from:
+```bash
+claude -p "$(cat Prompt/prompt.md)"
+```
 
-config/project.env
+`Prompt/prompt.md` is the operational prompt. This file is the standing policy that
+applies to every run.
 
-Credentials must come from the configured secure credential mechanism.
-
-Do not hard-code project-specific values in this file.
+The framework is generic. It contains no project-specific values and no credentials.
 
 ---
 
-# Workspace
+# Workspace Contract
 
-The VS Code workspace root is the current project directory.
+Everything the framework needs is already in the workspace when the job starts.
 
-Example:
+| Path | Contents | Provided by |
+|---|---|---|
+| repository root | current MuleSoft source under validation | `actions/checkout` |
+| `previous_ws/` | previous deployment's MuleSoft source | the calling workflow |
+| `postman_collection/` | Postman collection, and environment file if any | the same repository |
+| `workspace/execution/` | evidence written by this framework | phases 4 and 5 |
+| `reports/` | the final `.docx` report | phase 6 |
 
-C:\Projects\MyApiTesting\
-
-All relative paths are resolved from the workspace root.
+Nothing is cloned. Nothing is downloaded. Anypoint Platform is never contacted.
 
 ---
 
 # Configuration
 
-Read:
+There is no configuration file and no credentials file.
 
-config/project.env
+Defaults live in `scripts/framework_config.py`. Any of them can be overridden by an
+environment variable of the same name, which is how a calling workflow customises a
+run:
 
-before starting the workflow.
+```yaml
+env:
+  TARGET_ENVIRONMENT: QA
+  PREVIOUS_WORKSPACE: ./baseline
+```
 
-The configuration contains:
+`APPLICATION_NAME` is derived from the workspace when not set: `pom.xml` `artifactId`,
+then the GitHub repository name, then the workspace directory name.
 
-- MuleSoft Git repository URL
-- MuleSoft Git branch
-- MuleSoft application name
-- Anypoint Platform identifiers
-- Anypoint environment
-- Postman Git repository URL
-- Postman Git branch
-- Postman collection path
-- Postman DEV environment path
-- workspace directories
-- report output directory
-
-If a required configuration value is missing, stop and report the missing configuration.
-
-Do not guess project-specific values.
-
----
-
-# Credentials
-
-Use:
-
-credentials/credentials.env
-
-only when a secure enterprise credential mechanism is not available.
-
-Never expose credentials in:
-
-- chat
-- logs
-- reports
-- source comparisons
-- screenshots
-- generated files
-
-See:
-
-.claude/references/credentials-storage.md
+Secrets are supplied only as environment variables, normally from GitHub Actions
+secrets. Never write a secret to a file, a log, or the report.
 
 ---
 
 # Mandatory Workflow
 
-Execute the workflow in this order.
-
-## Phase 1 — Environment Validation
-
-Use:
-
-environment-validator
-
-Validate the operating system and required tools.
-
-Do not continue until all mandatory dependencies are available and verified.
-
----
-
-## Phase 2 — Fresh Git Clones
-
-Use:
-
-use an existing local repository  and ask the local location for Mulesoft and postman collection folders
-
-Validate:
-1. Mulesoft application repositories
-2. postman collection
-
----
-
-## Phase 3 — Anypoint Platform
-
-Use:
-
-anypoint-readonly-agent
-
-Locate the configured MuleSoft application in Anypoint Platform.
-
-Retrieve the corresponding application artifact.
-
-Only read operations are permitted.
-
-Do not modify the application.
-
-Do not deploy.
-
-Do not restart.
-
-Do not change configuration.
-
----
+Three phases, in this order. Phase numbering is retained from the previous framework
+so existing references stay meaningful; phases 1 to 3 no longer exist.
 
 ## Phase 4 — Source Comparison
 
-Use:
+```bash
+python3 scripts/source_compare.py
+```
 
-source-comparison-agent
+Compares the current source against the previous deployment source in `previous_ws/`,
+file by file, by content hash. Writes `workspace/execution/source-comparison.json`.
 
-Compare:
+Identifies added, deleted and modified files, and classifies them: Mule flow changes,
+API changes, dependency changes, configuration changes, DataWeave changes, tests,
+documentation.
 
-workspace/mulesoft-repository
+A non-zero exit stops the run. Classify it `BLOCKED`.
 
-against:
-
-workspace/anypoint-artifact/extracted
-
-The comparison must be exhaustive.
-
-A complete MATCH is required.
-
-If there is any mismatch:
-
-- stop Postman execution
-- classify testing as BLOCKED
-- include the comparison result in the report
-
----
+**A mismatch is not a failure.** Changes are the expected input to this framework —
+they are what gets analysed. This phase does not gate phase 5.
 
 ## Phase 5 — Postman Testing
 
-Only execute this phase after source comparison is:
+```bash
+python3 scripts/run_postman.py
+```
 
-MATCH
+Executes the **full** Postman collection from `postman_collection/` with Newman and
+writes `workspace/execution/postman-results.json`.
 
-Use:
+Every request in the collection is executed on every run. The phase 4 diff informs the
+analysis, never the test selection.
 
-postman-test-agent
+Read the source comparison to interpret the results, not to decide what to run.
 
-The Postman collection must come from the freshly cloned Postman repository.
+## Phase 6 — Analysis and Report
 
-Use DEV only.
+Write `workspace/execution/analysis.json` — your judgement, in the schema given in
+`Prompt/prompt.md`. Then:
 
-Do not modify the Postman collection.
+```bash
+python3 scripts/generate_report.py
+```
 
-Do not modify the Postman environment.
-
-Execute all API actions defined by the collection.
-
-This includes any HTTP method or API operation explicitly defined in the collection.
-
-Examples include:
-
-- GET
-- POST
-- PUT
-- PATCH
-- DELETE
-- HEAD
-- OPTIONS
-
-API write operations defined by the Postman collection are test actions against DEV and are permitted.
-
-They do not authorize modification of the Postman repository, Git repository, or Anypoint application.
+Renders the consolidated Word report into `reports/` and validates it before exiting.
 
 ---
 
-## Phase 6 — Report
+# Boundaries
 
-Use:
+## Read-only
 
-test-report-agent
+- The MuleSoft source is read-only. Do not modify it.
+- `previous_ws/` is read-only.
+- The Postman collection and environment file are read-only. Execute them unmodified.
+- No Git write operations: no commit, push, merge, rebase, tag, branch create or delete.
+- Write only inside `workspace/execution/` and `reports/`.
 
-Generate the final Microsoft Word document.
+## Prohibited
 
-The Word document is the authoritative test result.
+- Cloning or fetching any repository.
+- Downloading any deployment artifact.
+- Contacting Anypoint Platform for any reason.
+- Any environment validation phase. Assume the runner is provisioned.
+- Deploying, redeploying, restarting or reconfiguring anything.
 
-The report must contain all executed and non-executed test cases.
+## Permitted
 
-No test case may be silently omitted.
-
----
-
-# Read-Only Boundaries
-
-Git repositories are READ-ONLY.
-
-No Git write operations are permitted.
-
-Do not:
-
-- commit
-- push
-- merge
-- rebase
-- tag
-- create branches
-- delete branches
-- modify repository files
-
-The MuleSoft source repository must not be modified.
-
-The Postman repository must not be modified.
+The Postman collection may perform any HTTP method it explicitly defines — GET, POST,
+PUT, PATCH, DELETE, HEAD, OPTIONS — against the target environment. These are test
+actions. They do not authorise modifying the repository, the collection, or any
+deployed application.
 
 ---
 
-# Anypoint Platform Boundary
+# Result Rules
 
-Anypoint Platform application access is READ-ONLY.
+Use only:
 
-Allowed:
+```
+PASS   FAIL   SKIPPED   BLOCKED   NOT EXECUTED
+```
 
-- application lookup
-- metadata inspection
-- version inspection
-- build inspection
-- runtime inspection
-- artifact retrieval
+Never infer a PASS. Every result must be backed by actual execution evidence.
 
-Prohibited:
+A request that was sent but has no assertions defined is `NOT EXECUTED`, with the
+reason recorded — a bare 2xx with no validation is not evidence of correctness.
 
-- deploy
-- redeploy
-- restart
-- stop
-- start
-- delete
-- update
-- configuration modification
-- property modification
-- runtime modification
+If an individual test fails, capture it and continue with the remaining independent
+tests. If a prerequisite prevents execution, classify as `BLOCKED` or `NOT EXECUTED`
+with the reason recorded.
 
-The Anypoint identity itself must have appropriate read-only permissions.
-
----
-
-# Postman Boundary
-
-Postman collection execution is allowed.
-
-The collection may perform any API action explicitly defined in the collection against DEV.
-
-The collection itself must not be modified.
-
-The Postman environment must not be modified.
-
-Only the DEV environment may be used.
-
----
-
-# Test Result Rules
-
-Use:
-
-PASS
-FAIL
-BLOCKED
-NOT EXECUTED
-
-Never infer a PASS.
-
-Every result must be supported by actual execution evidence.
-
----
-
-# Failure Handling
-
-If an individual Postman use case fails, capture the failure and continue with subsequent independent use cases where technically possible.
-
-If a prerequisite prevents testing, classify affected tests as BLOCKED or NOT EXECUTED as appropriate.
+Every test case in the collection must appear in the report. No test case may be
+silently omitted.
 
 ---
 
 # Report
 
-The final report must be a professional Microsoft Word document.
+A professional Microsoft Word document in `reports/`, structured per
+`.claude/references/test-report-schema.md`:
 
-Use the structure defined in:
+1. Summary
+2. Source Comparison
+3. Postman Test Results
+4. Risk and Impact Analysis
+5. Final Recommendation
 
-.claude/references/test-report-schema.md
+Plus appendices: complete test case inventory, per-test execution evidence, detailed
+file change log, and execution boundaries.
 
-The report must include:
+Sections 1 to 3 and the appendices are generated mechanically from the evidence files.
+Section 4, section 5, and the high-level change summary come from your `analysis.json`.
 
-- application details
-- repository details
-- branches
-- commit SHAs
-- Anypoint version/build information
-- source comparison
-- DEV environment confirmation
-- complete test inventory
-- execution order
-- request details
-- responses
-- HTTP status codes
-- assertions
-- PASS/FAIL
-- failures
-- observations
-- deviations
-- execution metrics
-- final overall status
-
-Sensitive information must be redacted.
+Sensitive values are redacted automatically by `scripts/framework_config.py`. Do not
+rely on that alone — do not put secrets into `analysis.json` in the first place.
 
 ---
 
 # Chat Output
 
-The detailed test report must not be displayed in the chat.
+Do not print the report contents.
 
-The final Word document is the detailed output.
+The final message must be exactly three lines:
 
-The chat response should contain only a high-level status, such as:
-
-Overall Status: PASS
-Report: reports/<report-name>.docx
-
-or:
-
-Overall Status: FAIL
-Report: reports/<report-name>.docx
-
-or:
-
-Overall Status: BLOCKED
-Report: reports/<report-name>.docx
+```
+Overall Status: <PASS | FAIL | BLOCKED>
+Recommendation: <SAFE_TO_PROCEED | PROCEED_WITH_CAUTION | NOT_SAFE>
+Report: reports/<generated-file-name>.docx
+```

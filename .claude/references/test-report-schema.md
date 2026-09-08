@@ -1,347 +1,145 @@
-# Professional Test Report Schema
+# Validation Report Schema
 
-## Output
+Output: a single Microsoft Word `.docx` in `reports/`.
 
-Microsoft Word:
+Rendered by `scripts/generate_report.py` from three inputs:
 
-.docx
-
----
-
-# 1. Cover Page
-
-Include:
-
-- Application Name
-- Test Report Title
-- Environment
-- Execution Date
-- Report Version
-- Overall Status
-
----
-
-# 2. Executive Summary
-
-Include:
-
-- objective
-- scope
-- application
-- environment
-- source comparison result
-- total test cases
-- executed
-- passed
-- failed
-- blocked
-- not executed
-- overall result
-
----
-
-# 3. Application Information
-
-Include:
-
-- application name
-- application ID
-- organization
-- business group
-- environment
-- runtime
-- version
-- build
-- artifact
-
----
-
-# 4. Repository Information
-
-Include:
-
-## MuleSoft Repository
-
-- repository URL
-- branch
-- commit SHA
-- clone location
-- clone timestamp
-
-## Postman Repository
-
-- repository URL
-- branch
-- commit SHA
-- clone location
-- collection path
-- DEV environment path
-
----
-
-# 5. Environment Validation
-
-Include:
-
-| Dependency | Version | Status |
+| Input | Written by | Supplies |
 |---|---|---|
-| Git | | |
-| Java | | |
-| Maven | | |
-| Anypoint CLI | | |
-| MuleSoft tools | | |
-| Postman CLI | | |
-| Node.js | | |
-| Python | | |
-
-Include operating system.
+| `workspace/execution/source-comparison.json` | `scripts/source_compare.py` | cover, sections 1 to 2, appendix C |
+| `workspace/execution/postman-results.json` | `scripts/run_postman.py` | cover, sections 1 and 3, appendices A and B |
+| `workspace/execution/analysis.json` | Claude | section 1.2, sections 4 and 5 |
 
 ---
 
-# 6. Source Comparison
+## Cover Page
 
-Include:
-
-- Git source
-- Anypoint artifact
-- comparison scope
-- files examined
-- matching files
-- missing files
-- additional files
-- modified files
-- XML differences
-- properties differences
-- configuration differences
-- final comparison result
+Application, target environment, generation timestamp, comparison baseline, Postman
+collection, source comparison result, Postman result, and the overall validation
+result — colour-coded.
 
 ---
 
-# 7. Test Scope
+## 1. Summary
 
-Include:
+**1.0** Overall validation result, source comparison result, and overall Postman test
+status, as prominent colour-coded lines.
 
-- Postman collection
-- collection repository
-- DEV environment
-- test scope
-- execution boundaries
+**1.1 Scope** — application, target environment, current source path, previous
+deployment source path, collection path, environment path, and the execution scope
+statement.
 
----
+**1.2 High-Level Changes Identified** — from `analysis.highLevelChanges`. One line per
+meaningful change, written for a release reviewer.
 
-# 8. Test Case Inventory
-
-Use:
-
-| Test Case ID | Test Case Name | Use Case | Priority | Execution Order | Result |
-|---|---|---|---|---:|---|
-
-Every test case must appear.
+**1.3 Result Counts** — files compared, added, deleted, modified, unchanged; test cases
+total, passed, failed, skipped, blocked, not executed; pass percentage; assertions
+executed and failed; execution duration.
 
 ---
 
-# 9. Standard Test Case Format
+## 2. Source Comparison
 
-For every test case use:
+Baseline and current paths, files compared, added/deleted/modified counts, unchanged
+count, highest change impact, comparison result.
 
-## Test Case ID
+**2.1 Changes by Category** — file counts per category.
 
-Unique identifier.
+**2.2 Changed Files** — every changed file: path, status, category, impact, and
+`+added/-removed` line counts.
 
-## Test Case Name
-
-Clear test objective.
-
-## Use Case
-
-Business/API use case.
-
-## Test Type
-
-Functional/API/Integration/etc.
-
-## Priority
-
-High/Medium/Low when available.
-
-## Environment
-
-DEV.
-
-## Preconditions
-
-Conditions required before execution.
-
-## Test Data
-
-Relevant non-sensitive test data.
-
-## Objective
-
-What the test validates.
-
-## Execution Steps
-
-| Step | Action | Expected Result | Actual Result | Status |
-|---:|---|---|---|---|
-
-## Request Evidence
-
-| Attribute | Value |
-|---|---|
-| Method | |
-| URL | |
-| Headers | Sanitized |
-| Request Body | Sanitized |
-| HTTP Status | |
-| Response Time | |
-| Response Body | Sanitized |
-| Assertions | |
-| Result | |
-
-## Failure Details
-
-Include when applicable.
-
-## Observations
-
-Include relevant observations.
+**2.3 Behaviour-Relevant Deltas** — Mule flows added and removed, HTTP endpoints added
+and removed, dependencies added, removed and version-changed, configuration keys added
+and removed.
 
 ---
 
-# 10. Failure Summary
+## 3. Postman Test Results
 
-Include:
+Collection, collection path, environment, execution scope, counts, pass percentage,
+assertion totals, duration, overall result.
 
-- test case
-- request
-- HTTP status
-- failed assertion
-- expected
-- actual
-- error
-- impact
+**3.1 Results by Folder** — pass, fail, skip and not-executed counts per collection
+folder.
 
----
-
-# 11. Blocked Tests
-
-Include:
-
-- test case
-- blocking prerequisite
-- reason
-- impact
+**3.2 Failures** — per failed test case: folder, request, HTTP status, response time,
+transport error, failed assertion count, each failed assertion with its detail, and a
+redacted excerpt of the response body.
 
 ---
 
-# 12. Execution Metrics
+## 4. Risk and Impact Analysis
 
-Include:
+From `analysis.json`.
 
-- total tests
-- executed
-- passed
-- failed
-- blocked
-- not executed
-- pass percentage
-- execution duration where available
+The change impact narrative, then:
 
----
+**4.1 Potential Issues Introduced by the Changes** — area, severity, potential issue,
+mitigation. Sorted with HIGH first.
 
-# 13. Traceability
-
-Show:
-
-Git Repository
-→ Branch
-→ Commit
-→ MuleSoft Application
-
-Postman Repository
-→ Branch
-→ Commit
-→ Collection
-→ DEV Environment
-
-Application
-→ Anypoint Version
-→ Build
-→ Artifact
-
-Test Case
-→ Use Case
-→ Request
-→ Result
+**4.2 APIs and Functionality Requiring Attention** — API or functionality, and the
+reason it needs a closer look. Changed areas with no test coverage belong here.
 
 ---
 
-# 14. Security and Compliance
+## 5. Final Recommendation
 
-Confirm:
+From `analysis.json`.
 
-- Git repositories accessed read-only
-- no Git write operations performed
-- MuleSoft source not modified
-- Postman repository not modified
-- Postman collection not modified
-- Postman environment not modified
-- Anypoint application accessed read-only
-- no Anypoint application modification
-- no deployment
-- DEV used exclusively
-- credentials redacted
+Verdict — `SAFE_TO_PROCEED`, `PROCEED_WITH_CAUTION` or `NOT_SAFE` — alongside the
+overall validation result.
+
+**5.1 Rationale** — grounded in the comparison and the test evidence.
+
+**5.2 Failures and Concerns** — each concern, most serious first, in red.
+
+**5.3 Recommended Actions** — concrete follow-ups.
 
 ---
 
-# 15. Observations and Deviations
+## Appendix A — Complete Test Case Inventory
 
-Document relevant observations.
+Every test case in the collection: ID, execution order, folder, name, method, HTTP
+status, colour-coded result.
 
-Document deviations.
-
-If none:
-
-No deviations identified.
+No test case may be omitted, and these counts must reconcile with section 1.3.
 
 ---
 
-# 16. Final Conclusion
+## Appendix B — Test Case Execution Evidence
 
-Include:
-
-- overall result
-- source comparison result
-- test execution result
-- significant failures
-- significant observations
-- final conclusion
+Per test case: folder, execution order, method, redacted URL, redacted request headers
+and body, HTTP status, response time, response size, assertion counts, transport error,
+result and result note; a table of every assertion with its outcome; and a redacted,
+truncated response body.
 
 ---
 
-# 17. Mandatory Statement
+## Appendix C — Detailed File Change Log
 
-Git repositories were accessed as READ-ONLY.
+Per changed file: category, impact, binary flag, content hashes, the structured Mule /
+dependency / configuration deltas, and the redacted unified diff.
 
-No Git write operations were performed.
+---
 
-No Git source files were modified.
+## Appendix D — Execution Boundaries and Compliance
 
-The MuleSoft application source was not modified.
+Confirms, as a table: no repository cloned, no artifact downloaded, Anypoint Platform
+not contacted, the baseline used, source not modified, collection and environment used
+unmodified, target environment, no Git write operations, secrets redacted, and that no
+PASS was inferred.
 
-The Anypoint Platform application was accessed for READ-ONLY inspection and artifact retrieval only.
+---
 
-No Anypoint deployment or application configuration changes were performed.
+## Result Reconciliation
 
-The Postman collection repository was freshly cloned and accessed as READ-ONLY.
+The generator will not let the narrative contradict the evidence:
 
-The Postman collection was not modified.
+- any failed test case forces the overall result to `FAIL`
+- an unexecuted collection forces `BLOCKED`
+- otherwise `analysis.overallValidationResult` is honoured
 
-The Postman DEV environment was not modified.
+## Validation Before Success
 
-API operations defined by the supplied Postman collection were executed against DEV as part of the test activity.
-
-All reported test results are based on actual execution evidence.
-
-Sensitive credentials and authentication values were redacted from the report.
+After saving, the document is re-opened and checked for all five required section
+headings. A missing section is a non-zero exit, not a warning.

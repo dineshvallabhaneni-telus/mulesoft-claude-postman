@@ -1,41 +1,60 @@
+---
+name: postman-execution
+description: Phase 5 - execute the full Postman collection already present in the workspace and capture redacted evidence.
+---
+
 # Postman Execution Skill
 
-## References
+## Reference
 
-Use:
-
-.claude/references/postman-execution.md
-
-## Preconditions
-
-Source comparison must be:
-
-MATCH
+`.claude/references/postman-execution.md`
 
 ## Procedure
 
-1. load the freshly cloned collection
-2. load DEV environment
-3. verify DEV is active
-4. execute collection in defined order
-5. execute every applicable use case
-6. execute every associated request
-7. execute scripts
-8. execute assertions
-9. capture actual results
-10. continue after independent failures
+```bash
+python3 scripts/run_postman.py
+```
 
-## API Actions
+Runs the full collection from `postman_collection/` with Newman and writes
+`workspace/execution/postman-results.json`.
 
-The collection is authoritative.
+## Discovery
 
-Any HTTP method or API action explicitly defined by the collection may be executed against DEV.
+The collection is the first match for `*.postman_collection.json`, then
+`*collection*.json`, under `postman_collection/`.
+
+The environment is the first match for `*.postman_environment.json`, then
+`*environment*.json`, preferring a filename containing `TARGET_ENVIRONMENT`.
+
+Override either with `POSTMAN_COLLECTION_FILE` or `POSTMAN_ENVIRONMENT_FILE`.
+
+## Scope
+
+The **entire** collection runs on every invocation. The phase 4 diff shapes the
+analysis and the risk section, never the test selection.
 
 ## Restrictions
 
-Do not modify:
+Do not modify the collection, the environment file, or the source. Do not clone or
+download the collection — it is already in the workspace.
 
-- collection
-- environment
-- repository
-- source
+The collection may perform any HTTP method it explicitly defines against the target
+environment. These are test actions and are permitted.
+
+## Result classification
+
+| Result | Meaning |
+|---|---|
+| `PASS` | Every assertion for the request passed |
+| `FAIL` | An assertion failed, or the request errored in transport |
+| `SKIPPED` | Every assertion was skipped by the collection |
+| `BLOCKED` | The collection could not be executed at all |
+| `NOT EXECUTED` | No response recorded, or the request has no assertions defined |
+
+Never infer a PASS. A request that returned 200 but defines no assertions is
+`NOT EXECUTED`, with the reason recorded in `statusReason`.
+
+## Redaction
+
+URLs, headers, request bodies and response bodies are redacted before being written.
+Bodies are truncated to 4000 characters.

@@ -6,52 +6,52 @@
       "Glob(**)",
       "Grep(**)",
 
-      "Bash(git --version)",
-      "Bash(java -version)",
-      "Bash(mvn --version)",
-      "Bash(node --version)",
-      "Bash(npm --version)",
-      "Bash(python --version)",
-      "Bash(postman --version)",
-      "Bash(anypoint-cli --version)",
-      "Bash(ayx --version)",
+      "Write(workspace/execution/**)",
+      "Edit(workspace/execution/**)",
+      "Write(reports/**)",
+
+      "Bash(python3 scripts/source_compare.py)",
+      "Bash(python3 scripts/source_compare.py *)",
+      "Bash(python3 scripts/run_postman.py)",
+      "Bash(python3 scripts/run_postman.py *)",
+      "Bash(python3 scripts/generate_report.py)",
+      "Bash(python3 scripts/generate_report.py *)",
+
+      "Bash(ls *)",
+      "Bash(pwd)",
+      "Bash(cat workspace/execution/*)",
+      "Bash(python3 --version)",
+      "Bash(newman --version)"
+    ],
+    "deny": [
+      "Write(previous_ws/**)",
+      "Edit(previous_ws/**)",
+      "Write(postman_collection/**)",
+      "Edit(postman_collection/**)",
+      "Write(src/**)",
+      "Edit(src/**)",
+      "Write(pom.xml)",
+      "Edit(pom.xml)",
 
       "Bash(git clone *)",
       "Bash(git fetch *)",
-      "Bash(git status *)",
-      "Bash(git log *)",
-      "Bash(git branch *)",
-      "Bash(git rev-parse *)",
-      "Bash(git ls-tree *)",
-      "Bash(git show *)",
-      "Bash(git diff *)",
-      "Bash(git remote -v)",
-
-      "Bash(mkdir *)",
-      "Bash(pwd)",
-      "Bash(which *)",
-      "Bash(where *)",
-      "Bash(command -v *)",
-
-      "Bash(unzip *)",
-      "Bash(sha256sum *)",
-      "Bash(shasum *)",
-      "Bash(certutil *)"
-    ],
-    "deny": [
+      "Bash(git pull *)",
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(git merge *)",
       "Bash(git rebase *)",
       "Bash(git tag *)",
-      "Bash(git branch -d *)",
-      "Bash(git branch -D *)",
-      "Bash(git checkout -b *)",
-      "Bash(git switch -c *)"
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(git branch *)",
+      "Bash(git reset *)",
+
+      "Bash(anypoint-cli *)",
+      "Bash(ayx *)",
+      "Bash(mvn deploy *)",
+      "Bash(curl *anypoint*)",
+      "Bash(rm -rf *)"
     ]
-  },
-  "env": {
-    "PROJECT_ROOT": "."
   }
 }
