@@ -17,7 +17,7 @@ Override the baseline location with `PREVIOUS_WORKSPACE`.
 
 Every file in either tree is compared, except names listed in `COMPARISON_EXCLUDE`,
 which by default skips `.git`, `.github`, `.claude`, `.vscode`, `.idea`, `target`,
-`node_modules`, `.mule`, `previous_ws`, `workspace`, `reports`, `scripts`, `Prompt`,
+`node_modules`, `.mule`, `previous_ws`, `workspace`, `reports`, `scripts`, `Prompt`,  `claude-repo`
 `postman_collection` and `.DS_Store`.
 
 Set `MULESOFT_SOURCE_SUBDIRS` to a comma-separated list to restrict the comparison to
