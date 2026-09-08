@@ -1,0 +1,1940 @@
+{
+ "collection": "ANU MuleSoft \u2014 Lingk migration",
+ "rows": [
+  {
+   "order": 1,
+   "id": "TC-001",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "1. Liveness and inventory",
+   "name": "Health is UP",
+   "method": "GET",
+   "url": "{{studentPipelineUrl}}/api/health",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "200",
+    "status is UP",
+    "names the application",
+    "reports an environment",
+    "version is"
+   ],
+   "priority": "High",
+   "type": "API / Liveness"
+  },
+  {
+   "order": 2,
+   "id": "TC-002",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "1. Liveness and inventory",
+   "name": "Recipe inventory lists what this app owns",
+   "method": "GET",
+   "url": "{{studentPipelineUrl}}/api/recipes",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "200",
+    "carries a recipes array",
+    "every advertised recipe advertises a POST trigger"
+   ],
+   "priority": "Medium",
+   "type": "API / Liveness"
+  },
+  {
+   "order": 3,
+   "id": "TC-003",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "GET on a trigger is refused with 405",
+   "method": "GET",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN17",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "405",
+    "says the method was refused",
+    "names the allowed method"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 4,
+   "id": "TC-004",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "POST to a read-only path is refused with 405",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/recipes",
+   "headers": [
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "405",
+    "names GET as allowed"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 5,
+   "id": "TC-005",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "Unknown path is 404 and self-describing",
+   "method": "GET",
+   "url": "{{studentPipelineUrl}}/api/nothing-here",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "404",
+    "status NOT_FOUND",
+    "lists the paths that do exist"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 6,
+   "id": "TC-006",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "Unknown recipe code is 404, not a silent success",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/NOPE99",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "404",
+    "status UNKNOWN_RECIPE"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 7,
+   "id": "TC-007",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "A trailing slash on an unknown code is still 404",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/NOPE99/",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "404",
+    "status UNKNOWN_RECIPE"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 8,
+   "id": "TC-008",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "A trigger with NO token is refused with 401",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN17",
+   "headers": [
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "401",
+    "status UNAUTHORIZED",
+    "names the header to send",
+    "leaks nothing about the expected value"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 9,
+   "id": "TC-009",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "A trigger with a WRONG token is refused with 401, identically",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN17",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "401",
+    "status UNAUTHORIZED",
+    "same body as the no-token case"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 10,
+   "id": "TC-010",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF21 -> academic-program-sync-p1",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF21",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 11,
+   "id": "TC-011",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN18 -> contact-activity-export",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN18",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 12,
+   "id": "TC-012",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN19 -> contact-activity-export",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN19",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 13,
+   "id": "TC-013",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN20 -> contact-activity-export",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN20",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 14,
+   "id": "TC-014",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN21 -> contact-activity-export",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN21",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 15,
+   "id": "TC-015",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN12 -> contact-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN12",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 16,
+   "id": "TC-016",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN13 -> contact-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN13",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 17,
+   "id": "TC-017",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN15 -> contact-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN15",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 18,
+   "id": "TC-018",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN22 -> contact-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN22",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 19,
+   "id": "TC-019",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DUPE11 -> contact-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DUPE11",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 20,
+   "id": "TC-020",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF20 -> contact-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF20",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 21,
+   "id": "TC-021",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DOC10 -> document-checklist-chain",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DOC10",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 22,
+   "id": "TC-022",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DOC11 -> document-checklist-chain",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DOC11",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 23,
+   "id": "TC-023",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DOC12 -> document-checklist-chain",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DOC12",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 24,
+   "id": "TC-024",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DOC13 -> document-checklist-chain",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DOC13",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 25,
+   "id": "TC-025",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DOC14 -> document-checklist-chain",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DOC14",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 26,
+   "id": "TC-026",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DOC15 -> document-checklist-chain",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DOC15",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 27,
+   "id": "TC-027",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DOC16 -> document-checklist-chain",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DOC16",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 28,
+   "id": "TC-028",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DOC17 -> document-checklist-chain",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DOC17",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 29,
+   "id": "TC-029",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF19A -> financial-aid-award-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF19A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 30,
+   "id": "TC-030",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN -> lead-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 31,
+   "id": "TC-031",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN11 -> lead-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN11",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 32,
+   "id": "TC-032",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN14 -> lead-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN14",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 33,
+   "id": "TC-033",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "DUPE10 -> lead-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/DUPE10",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 34,
+   "id": "TC-034",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF16A -> program-enrollment-case-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF16A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 35,
+   "id": "TC-035",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF16B -> program-enrollment-case-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF16B",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 36,
+   "id": "TC-036",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF16C -> program-enrollment-case-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF16C",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 37,
+   "id": "TC-037",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF16D -> program-enrollment-case-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF16D",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 38,
+   "id": "TC-038",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF16F -> program-enrollment-case-sync  (detached)",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF16F?async=true",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "202 ACCEPTED - the run is detached",
+    "status ACCEPTED",
+    "names the recipe",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 39,
+   "id": "TC-039",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN16 -> program-enrollment-case-sync  (detached)",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN16?async=true",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "202 ACCEPTED - the run is detached",
+    "status ACCEPTED",
+    "names the recipe",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 40,
+   "id": "TC-040",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF18A -> student-alert-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF18A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 41,
+   "id": "TC-041",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF18B -> student-alert-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/ANSF18B",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 42,
+   "id": "TC-042",
+   "app": "anu-student-pipeline  (33 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFAN17 -> user-federation-sync",
+   "method": "POST",
+   "url": "{{studentPipelineUrl}}/api/trigger/SFAN17",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 43,
+   "id": "TC-043",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "1. Liveness and inventory",
+   "name": "Health is UP",
+   "method": "GET",
+   "url": "{{academicStructureUrl}}/api/health",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "200",
+    "status is UP",
+    "names the application",
+    "reports an environment",
+    "version is"
+   ],
+   "priority": "High",
+   "type": "API / Liveness"
+  },
+  {
+   "order": 44,
+   "id": "TC-044",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "1. Liveness and inventory",
+   "name": "Recipe inventory lists what this app owns",
+   "method": "GET",
+   "url": "{{academicStructureUrl}}/api/recipes",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "200",
+    "carries a recipes array",
+    "every advertised recipe advertises a POST trigger"
+   ],
+   "priority": "Medium",
+   "type": "API / Liveness"
+  },
+  {
+   "order": 45,
+   "id": "TC-045",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "GET on a trigger is refused with 405",
+   "method": "GET",
+   "url": "{{academicStructureUrl}}/api/trigger/SFAN17",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "405",
+    "says the method was refused",
+    "names the allowed method"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 46,
+   "id": "TC-046",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "POST to a read-only path is refused with 405",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/recipes",
+   "headers": [
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "405",
+    "names GET as allowed"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 47,
+   "id": "TC-047",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "Unknown path is 404 and self-describing",
+   "method": "GET",
+   "url": "{{academicStructureUrl}}/api/nothing-here",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "404",
+    "status NOT_FOUND",
+    "lists the paths that do exist"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 48,
+   "id": "TC-048",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "Unknown recipe code is 404, not a silent success",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/NOPE99",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "404",
+    "status UNKNOWN_RECIPE"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 49,
+   "id": "TC-049",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "A trailing slash on an unknown code is still 404",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/NOPE99/",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "404",
+    "status UNKNOWN_RECIPE"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 50,
+   "id": "TC-050",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "A trigger with NO token is refused with 401",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFAN17",
+   "headers": [
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "401",
+    "status UNAUTHORIZED",
+    "names the header to send",
+    "leaks nothing about the expected value"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 51,
+   "id": "TC-051",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "A trigger with a WRONG token is refused with 401, identically",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFAN17",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "401",
+    "status UNAUTHORIZED",
+    "same body as the no-token case"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 52,
+   "id": "TC-052",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF11A -> academic-program-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF11A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 53,
+   "id": "TC-053",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV17A -> canvas-user-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV17A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 54,
+   "id": "TC-054",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV17B -> canvas-user-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV17B",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 55,
+   "id": "TC-055",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF14A -> class-schedule-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF14A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 56,
+   "id": "TC-056",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF14B -> class-schedule-sync  (detached)",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF14B?async=true",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "202 ACCEPTED - the run is detached",
+    "status ACCEPTED",
+    "names the recipe",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 57,
+   "id": "TC-057",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF13A -> course-offering-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF13A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 58,
+   "id": "TC-058",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF13B -> course-offering-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF13B",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 59,
+   "id": "TC-059",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF13D -> course-offering-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF13D",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 60,
+   "id": "TC-060",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF15A -> course-offering-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF15A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 61,
+   "id": "TC-061",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV15A -> course-offering-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV15A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 62,
+   "id": "TC-062",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV15B -> course-offering-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV15B",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 63,
+   "id": "TC-063",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV16A -> course-offering-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV16A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 64,
+   "id": "TC-064",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF12A -> course-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF12A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 65,
+   "id": "TC-065",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF12B -> course-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF12B",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 66,
+   "id": "TC-066",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV13A -> course-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV13A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 67,
+   "id": "TC-067",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV13B -> course-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV13B",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 68,
+   "id": "TC-068",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV14A -> course-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV14A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 69,
+   "id": "TC-069",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV14B -> course-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV14B",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 70,
+   "id": "TC-070",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF10A -> term-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF10A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 71,
+   "id": "TC-071",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ANSF10B -> term-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/ANSF10B",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 72,
+   "id": "TC-072",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV10A -> term-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV10A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 73,
+   "id": "TC-073",
+   "app": "anu-academic-structure  (22 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "SFCV11A -> term-sync",
+   "method": "POST",
+   "url": "{{academicStructureUrl}}/api/trigger/SFCV11A",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 74,
+   "id": "TC-074",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "1. Liveness and inventory",
+   "name": "Health is UP",
+   "method": "GET",
+   "url": "{{attendanceUrl}}/api/health",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "200",
+    "status is UP",
+    "names the application",
+    "reports an environment",
+    "version is"
+   ],
+   "priority": "High",
+   "type": "API / Liveness"
+  },
+  {
+   "order": 75,
+   "id": "TC-075",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "1. Liveness and inventory",
+   "name": "Recipe inventory lists what this app owns",
+   "method": "GET",
+   "url": "{{attendanceUrl}}/api/recipes",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "200",
+    "carries a recipes array",
+    "every advertised recipe advertises a POST trigger"
+   ],
+   "priority": "Medium",
+   "type": "API / Liveness"
+  },
+  {
+   "order": 76,
+   "id": "TC-076",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "GET on a trigger is refused with 405",
+   "method": "GET",
+   "url": "{{attendanceUrl}}/api/trigger/SFAN17",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "405",
+    "says the method was refused",
+    "names the allowed method"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 77,
+   "id": "TC-077",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "POST to a read-only path is refused with 405",
+   "method": "POST",
+   "url": "{{attendanceUrl}}/api/recipes",
+   "headers": [
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "405",
+    "names GET as allowed"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 78,
+   "id": "TC-078",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "Unknown path is 404 and self-describing",
+   "method": "GET",
+   "url": "{{attendanceUrl}}/api/nothing-here",
+   "headers": [],
+   "body": "",
+   "asserts": [
+    "404",
+    "status NOT_FOUND",
+    "lists the paths that do exist"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 79,
+   "id": "TC-079",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "Unknown recipe code is 404, not a silent success",
+   "method": "POST",
+   "url": "{{attendanceUrl}}/api/trigger/NOPE99",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "404",
+    "status UNKNOWN_RECIPE"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 80,
+   "id": "TC-080",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "A trailing slash on an unknown code is still 404",
+   "method": "POST",
+   "url": "{{attendanceUrl}}/api/trigger/NOPE99/",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "404",
+    "status UNKNOWN_RECIPE"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 81,
+   "id": "TC-081",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "A trigger with NO token is refused with 401",
+   "method": "POST",
+   "url": "{{attendanceUrl}}/api/trigger/SFAN17",
+   "headers": [
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "401",
+    "status UNAUTHORIZED",
+    "names the header to send",
+    "leaks nothing about the expected value"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 82,
+   "id": "TC-082",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "2. HTTP contract (negative tests)",
+   "name": "A trigger with a WRONG token is refused with 401, identically",
+   "method": "POST",
+   "url": "{{attendanceUrl}}/api/trigger/SFAN17",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "401",
+    "status UNAUTHORIZED",
+    "same body as the no-token case"
+   ],
+   "priority": "Medium",
+   "type": "API / Negative"
+  },
+  {
+   "order": 83,
+   "id": "TC-083",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ATTN1 -> attendance-canvas",
+   "method": "POST",
+   "url": "{{attendanceUrl}}/api/trigger/ATTN1",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 84,
+   "id": "TC-084",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ATTN2 -> attendance-canvas",
+   "method": "POST",
+   "url": "{{attendanceUrl}}/api/trigger/ATTN2",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 85,
+   "id": "TC-085",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ATTN3 -> attendance-chain",
+   "method": "POST",
+   "url": "{{attendanceUrl}}/api/trigger/ATTN3",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  },
+  {
+   "order": 86,
+   "id": "TC-086",
+   "app": "anu-attendance  (4 recipes)",
+   "group": "3. Recipe triggers",
+   "name": "ATTN4 -> attendance-chain",
+   "method": "POST",
+   "url": "{{attendanceUrl}}/api/trigger/ATTN4",
+   "headers": [
+    "X-ANU-Trigger-Token: [REDACTED]",
+    "Content-Length: 0"
+   ],
+   "body": "",
+   "asserts": [
+    "200",
+    "reports selected, succeeded and failed",
+    "the counts are consistent",
+    "status matches the failure count",
+    "every failure names a record and a reason",
+    "carries a correlationId for the logs"
+   ],
+   "priority": "High",
+   "type": "API / Functional"
+  }
+ ]
+}
